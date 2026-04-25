@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChainCred — Decentralized Credential Verification</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔗</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="app">
+
+  <!-- ══════════════════════════════
+       HEADER
+  ══════════════════════════════ -->
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">🔗</div>
+      <div>
+        <div class="logo-text">ChainCred</div>
+        <div class="logo-sub">Decentralized Credential Protocol</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <button class="nav-btn active" onclick="showPanel('issuer', this)">
+        <span>🏛</span> Issuer Panel
+      </button>
+      <button class="nav-btn" onclick="showPanel('holder', this)">
+        <span>👤</span> My Wallet
+      </button>
+      <button class="nav-btn" onclick="showPanel('verifier', this)">
+        <span>🔍</span> Verifier
+      </button>
+      <button class="nav-btn" onclick="showPanel('explorer', this)">
+        <span>📊</span> Explorer
+      </button>
+    </nav>
+
+    <div class="header-right">
+      <div class="network-badge"><span class="pulse"></span> Polygon Mumbai</div>
+      <div class="wallet-btn" onclick="connectWallet()" id="wallet-btn">
+        <span>🦊</span>
+        <span id="wallet-text">Connect MetaMask</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════
+       ISSUER PANEL
+  ══════════════════════════════ -->
+  <main class="panel active" id="panel-issuer">
+
+    <!-- Flow steps bar -->
+    <div class="flow">
+      <div class="flow-step active-step" id="step-1">
+        <div class="flow-icon">📋</div>
+        <div class="flow-label">1. Fill Details</div>
+        <div class="flow-sub">issuer → certificate</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" id="step-2">
+        <div class="flow-icon">🔒</div>
+        <div class="flow-label">2. Hash (SHA-256)</div>
+        <div class="flow-sub">fingerprint proof</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" id="step-3">
+        <div class="flow-icon">📦</div>
+        <div class="flow-label">3. Upload IPFS</div>
+        <div class="flow-sub">permanent storage</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" id="step-4">
+        <div class="flow-icon">⛓</div>
+        <div class="flow-label">4. Anchor Chain</div>
+        <div class="flow-sub">on-chain record</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+
+      <!-- Issue Form -->
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Issue Credential</div>
+            <div class="section-sub">Mint a tamper-proof certificate on-chain</div>
+          </div>
+          <div class="chain-info">
+            <span style="font-size:16px">🟣</span>
+            <span class="text-xs text-dim text-mono">Polygon Mumbai</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Credential Type</label>
+          <select class="form-input" id="cred-type">
+            <option>Academic Degree</option>
+            <option>Professional Certificate</option>
+            <option>Skills Badge</option>
+            <option>Employment Record</option>
+            <option>Training Completion</option>
+          </select>
+        </div>
+
+        <div class="grid-2" style="gap:12px">
+          <div class="form-group">
+            <label class="form-label">Recipient Name</label>
+            <input class="form-input" id="rec-name" placeholder="John Doe" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Recipient Wallet</label>
+            <input class="form-input" id="rec-wallet" placeholder="0x..." />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Institution / Issuer</label>
+          <input class="form-input" id="institution" placeholder="MIT, Google, Coursera..." />
+        </div>
+
+        <div class="grid-2" style="gap:12px">
+          <div class="form-group">
+            <label class="form-label">Course / Program</label>
+            <input class="form-input" id="course" placeholder="Computer Science, B.Tech..." />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Issue Date</label>
+            <input class="form-input" type="date" id="issue-date" />
+          </div>
+        </div>
+
+        <div class="upload-zone" id="upload-zone" onclick="triggerUpload()">
+          <div class="upload-icon" id="upload-icon">📄</div>
+          <div class="upload-text" id="upload-text">Drop certificate PDF or image here</div>
+          <div class="upload-sub" id="upload-sub">Supports PDF, PNG, JPG · Max 10MB</div>
+        </div>
+        <input type="file" id="file-input" style="display:none" accept=".pdf,.png,.jpg,.jpeg" onchange="handleFile(this)" />
+
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="issueCred()" id="issue-btn">
+          ⛓ Issue on Blockchain
+        </button>
+      </div>
+
+      <!-- Output Column -->
+      <div class="output-col">
+
+        <!-- Hash -->
+        <div class="card">
+          <div class="section-header" style="margin-bottom:12px">
+            <div class="section-title">Credential Hash</div>
+            <span class="tag tag-green">SHA-256</span>
+          </div>
+          <div class="hash-label">Document fingerprint (tamper-proof)</div>
+          <div class="hash-box" id="hash-display">
+            Generate a credential to see its SHA-256 hash here...
+          </div>
+          <div class="mt-2 text-xs text-dim">
+            Any modification to the certificate changes this hash entirely
+          </div>
+        </div>
+
+        <!-- IPFS -->
+        <div class="card">
+          <div class="section-header" style="margin-bottom:12px">
+            <div class="section-title">IPFS Storage</div>
+            <span class="tag tag-blue">Pinata</span>
+          </div>
+          <div class="hash-label">Content Identifier (CID)</div>
+          <div class="hash-box" id="ipfs-display" style="color:var(--blue)">
+            CID will appear after upload...
+          </div>
+          <div class="mt-2 flex gap-2">
+            <span class="ipfs-link" onclick="openIPFS()">🌐 View on IPFS</span>
+            <span class="ipfs-link" onclick="copyIPFS()">📋 Copy CID</span>
+          </div>
+        </div>
+
+        <!-- TX Hash -->
+        <div class="card">
+          <div class="section-header" style="margin-bottom:12px">
+            <div class="section-title">Blockchain Transaction</div>
+            <span class="tag tag-purple">Polygon</span>
+          </div>
+          <div class="hash-label">Transaction Hash (on Polygon Mumbai)</div>
+          <div class="hash-box" id="tx-display" style="color:var(--purple)">
+            Transaction hash will appear after on-chain anchoring...
+          </div>
+          <div class="mt-2 flex gap-2">
+            <span class="ipfs-link" style="color:var(--purple)" onclick="openPolygon()">🔗 PolygonScan</span>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card card-sm">
+          <div class="section-title text-sm" style="margin-bottom:10px">Recent Activity</div>
+          <div id="recent-list">
+            <div class="activity-item">
+              <div class="activity-dot" style="background:var(--green)"></div>
+              <div class="activity-content">
+                <div class="activity-title">B.Tech CSE — Priya Sharma</div>
+                <div class="activity-meta">IIT Bombay · 2 hours ago · #0xab12...</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot" style="background:var(--blue)"></div>
+              <div class="activity-content">
+                <div class="activity-title">AWS Solutions Architect</div>
+                <div class="activity-meta">Amazon · 5 hours ago · #0xcd34...</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot" style="background:var(--amber)"></div>
+              <div class="activity-content">
+                <div class="activity-title">Machine Learning Specialization</div>
+                <div class="activity-meta">Coursera · yesterday · #0xef56...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /output-col -->
+    </div><!-- /grid-2 -->
+  </main>
+
+  <!-- ══════════════════════════════
+       HOLDER PANEL
+  ══════════════════════════════ -->
+  <main class="panel" id="panel-holder">
+
+    <div class="grid-4">
+      <div class="stat-card green">
+        <div class="card-title">✅ Verified Credentials</div>
+        <div class="card-value text-green">7</div>
+        <div class="card-sub">All on-chain</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="card-title">📅 Latest Issue</div>
+        <div class="card-value" style="font-size:20px">Apr 2025</div>
+        <div class="card-sub">AWS Certified</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="card-title">🏛 Issuers</div>
+        <div class="card-value text-amber">4</div>
+        <div class="card-sub">Institutions linked</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="card-title">🔍 Verifications</div>
+        <div class="card-value text-purple">23</div>
+        <div class="card-sub">Times checked</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="section-header">
+          <div>
+            <div class="section-title">My Credentials</div>
+            <div class="text-xs text-mono text-dim" style="margin-top:2px">Wallet: 0x7a3b...9f2e</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="shareAll()">🔗 Share Portfolio</button>
+        </div>
+
+        <div class="cred-list" id="cred-list">
+
+          <div class="cred-card" onclick="selectCred(this,'B.Tech Computer Science','IIT Bombay','2024','ba7816fb8f04f52e3e5a1c4f...','Qm7X9pK2r4mNvB1cWqA...','0xab12cd34ef56789...')">
+            <div class="cred-icon blue">🎓</div>
+            <div class="cred-body">
+              <div class="cred-title">B.Tech Computer Science</div>
+              <div class="cred-issuer">IIT Bombay · 2024</div>
+              <div class="cred-meta">
+                <span class="tag tag-green">✓ Verified</span>
+                <span class="tag tag-blue">Academic</span>
+                <span class="tag tag-purple">Polygon</span>
+              </div>
+            </div>
+            <div class="text-xs text-dim" style="align-self:center">›</div>
+          </div>
+
+          <div class="cred-card" onclick="selectCred(this,'AWS Solutions Architect','Amazon Web Services','2025','e3b0c44298fc1c149afb...','Qm4K8pL6r2mNvC3dWrB...','0xcd34ef56ab789012...')">
+            <div class="cred-icon amber">☁️</div>
+            <div class="cred-body">
+              <div class="cred-title">AWS Solutions Architect</div>
+              <div class="cred-issuer">Amazon Web Services · April 2025</div>
+              <div class="cred-meta">
+                <span class="tag tag-green">✓ Verified</span>
+                <span class="tag tag-amber">Professional</span>
+                <span class="tag tag-purple">Polygon</span>
+              </div>
+            </div>
+            <div class="text-xs text-dim" style="align-self:center">›</div>
+          </div>
+
+          <div class="cred-card" onclick="selectCred(this,'Machine Learning Specialization','Coursera / Stanford','2023','cf83e1357eefb8bdf158...','Qm2M5nP4q1mLvA8eVsC...','0xef56ab7812cd3490...')">
+            <div class="cred-icon" style="background:var(--greenDim);border:1px solid #00d97e40">🤖</div>
+            <div class="cred-body">
+              <div class="cred-title">Machine Learning Specialization</div>
+              <div class="cred-issuer">Coursera / Stanford · 2023</div>
+              <div class="cred-meta">
+                <span class="tag tag-green">✓ Verified</span>
+                <span class="tag tag-blue">Skills</span>
+                <span class="tag tag-purple">Polygon</span>
+              </div>
+            </div>
+            <div class="text-xs text-dim" style="align-self:center">›</div>
+          </div>
+
+          <div class="cred-card" onclick="selectCred(this,'Full-Stack Web Dev Bootcamp','Scaler Academy','2022','2c624232cdd221771294...','Qm9R3sQ7t5mOxD4fUtE...','0x1234ab56cd78ef90...')">
+            <div class="cred-icon" style="background:var(--purpleDim);border:1px solid #b97fff40">💻</div>
+            <div class="cred-body">
+              <div class="cred-title">Full-Stack Web Dev Bootcamp</div>
+              <div class="cred-issuer">Scaler Academy · 2022</div>
+              <div class="cred-meta">
+                <span class="tag tag-green">✓ Verified</span>
+                <span class="tag tag-purple">Training</span>
+                <span class="tag tag-purple">Polygon</span>
+              </div>
+            </div>
+            <div class="text-xs text-dim" style="align-self:center">›</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Detail -->
+      <div>
+        <div class="section-title" style="margin-bottom:16px">Credential Detail</div>
+        <div class="card" id="cred-detail">
+          <div style="text-align:center;padding:30px 0;color:var(--text3);font-size:13px">
+            Click a credential to view details
+          </div>
+        </div>
+
+        <div class="card mt-3">
+          <div class="section-title text-sm" style="margin-bottom:14px">Skills Breakdown</div>
+          <div class="skills-list">
+            <div class="flex justify-between text-xs mt-2">
+              <span class="text-dim">Software Engineering</span>
+              <span class="text-green fw-600">Expert</span>
+            </div>
+            <div class="progress mt-1"><div class="progress-fill" style="width:88%;background:var(--green)"></div></div>
+
+            <div class="flex justify-between text-xs mt-2">
+              <span class="text-dim">Cloud Architecture</span>
+              <span class="text-blue fw-600">Advanced</span>
+            </div>
+            <div class="progress mt-1"><div class="progress-fill" style="width:74%;background:var(--blue)"></div></div>
+
+            <div class="flex justify-between text-xs mt-2">
+              <span class="text-dim">Machine Learning</span>
+              <span class="text-amber fw-600">Intermediate</span>
+            </div>
+            <div class="progress mt-1"><div class="progress-fill" style="width:60%;background:var(--amber)"></div></div>
+
+            <div class="flex justify-between text-xs mt-2">
+              <span class="text-dim">Data Engineering</span>
+              <span class="text-purple fw-600">Beginner</span>
+            </div>
+            <div class="progress mt-1"><div class="progress-fill" style="width:35%;background:var(--purple)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ══════════════════════════════
+       VERIFIER PANEL
+  ══════════════════════════════ -->
+  <main class="panel" id="panel-verifier">
+
+    <div class="grid-2">
+      <div class="verify-inputs">
+
+        <!-- Verify by Hash -->
+        <div class="card">
+          <div class="section-title" style="margin-bottom:4px">🔍 Verify by Hash</div>
+          <div class="section-sub text-xs mt-1" style="margin-bottom:16px">Paste the SHA-256 hash of the certificate</div>
+          <div class="form-group">
+            <label class="form-label">Certificate Hash</label>
+            <input class="form-input" id="v-hash" placeholder="ba7816fb8f04f52e3e5a1c4f4d3b6c1e..." style="font-family:var(--mono)" />
+          </div>
+          <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center" onclick="verifyHash()">
+            🔎 Verify on Blockchain
+          </button>
+        </div>
+
+        <!-- Verify by File -->
+        <div class="card">
+          <div class="section-title" style="margin-bottom:4px">📤 Verify by File</div>
+          <div class="section-sub text-xs mt-1" style="margin-bottom:14px">Upload the certificate — we hash it and check on-chain</div>
+          <div class="upload-zone" onclick="triggerVerifyUpload()" style="padding:20px;margin-bottom:12px">
+            <div class="upload-icon">🔒</div>
+            <div class="upload-text">Upload certificate to verify</div>
+            <div class="upload-sub">Hash computed locally — file never leaves your device</div>
+          </div>
+          <input type="file" id="v-file" style="display:none" onchange="verifyFile(this)" />
+          <button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center" onclick="triggerVerifyUpload()">
+            📄 Choose File
+          </button>
+        </div>
+
+        <!-- Verify by CID -->
+        <div class="card">
+          <div class="section-title" style="margin-bottom:4px">🌐 Verify by IPFS CID</div>
+          <div class="section-sub text-xs mt-1" style="margin-bottom:14px">Paste the content identifier from IPFS</div>
+          <div class="form-group">
+            <label class="form-label">IPFS Content Identifier</label>
+            <input class="form-input" id="v-cid" placeholder="QmXoypiz... or bafybei..." style="font-family:var(--mono)" />
+          </div>
+          <button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center" onclick="verifyCID()">
+            📦 Fetch &amp; Verify from IPFS
+          </button>
+        </div>
+      </div>
+
+      <!-- Result -->
+      <div>
+        <div class="section-title" style="margin-bottom:16px">Verification Result</div>
+
+        <div class="verify-result success" id="v-success">
+          <div class="verify-icon">✅</div>
+          <div class="verify-title text-green">Certificate Verified</div>
+          <div class="verify-detail">This credential is authentic and has not been tampered with</div>
+          <div class="divider"></div>
+          <div id="v-detail"></div>
+        </div>
+
+        <div class="verify-result failure" id="v-fail">
+          <div class="verify-icon">❌</div>
+          <div class="verify-title text-red">Certificate NOT Found</div>
+          <div class="verify-detail">No matching hash found on-chain. This certificate may be fake or tampered.</div>
+        </div>
+
+        <div class="card" id="v-idle">
+          <div style="text-align:center;padding:40px 20px;color:var(--text3)">
+            <div style="font-size:40px;margin-bottom:12px">🔍</div>
+            <div style="font-size:14px">Submit a hash, upload a file, or paste a CID<br>to verify a credential on-chain</div>
+          </div>
+        </div>
+
+        <!-- How it works -->
+        <div class="card mt-3">
+          <div class="section-title text-sm" style="margin-bottom:12px">How Verification Works</div>
+          <div class="how-list">
+            <div class="how-step">
+              <span class="how-num green">1</span>
+              <div class="text-sm text-dim">Certificate hashed locally with SHA-256</div>
+            </div>
+            <div class="how-step">
+              <span class="how-num blue">2</span>
+              <div class="text-sm text-dim">Hash looked up in Polygon smart contract</div>
+            </div>
+            <div class="how-step">
+              <span class="how-num purple">3</span>
+              <div class="text-sm text-dim">IPFS CID verified for file integrity</div>
+            </div>
+            <div class="how-step">
+              <span class="how-num amber">4</span>
+              <div class="text-sm text-dim">Issuer wallet signature confirmed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ══════════════════════════════
+       EXPLORER PANEL
+  ══════════════════════════════ -->
+  <main class="panel" id="panel-explorer">
+
+    <div class="grid-4">
+      <div class="stat-card green">
+        <div class="card-title">📜 Total Credentials</div>
+        <div class="card-value text-green">1,847</div>
+        <div class="card-sub">All-time issued</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="card-title">🔍 Verifications</div>
+        <div class="card-value text-blue">9,321</div>
+        <div class="card-sub">Total checks</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="card-title">🏛 Issuers</div>
+        <div class="card-value text-amber">48</div>
+        <div class="card-sub">Registered orgs</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="card-title">❌ Fakes Caught</div>
+        <div class="card-value text-red">234</div>
+        <div class="card-sub">Blocked attempts</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+
+      <!-- Live feed -->
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">Live Transaction Feed</div>
+          <span class="tag tag-green" style="font-size:10px;display:flex;align-items:center;gap:4px"><span class="pulse" style="width:5px;height:5px"></span>LIVE</span>
+        </div>
+        <div id="tx-feed"></div>
+      </div>
+
+      <!-- Architecture SVG -->
+      <div class="card">
+        <div class="section-title" style="margin-bottom:16px">System Architecture</div>
+        <svg width="100%" viewBox="0 0 360 300" style="display:block" aria-label="System architecture diagram">
+          <defs>
+            <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+          <rect x="10" y="10" width="90" height="50" rx="8" fill="#00d97e15" stroke="#00d97e50" stroke-width="1"/>
+          <text x="55" y="31" text-anchor="middle" font-size="18" fill="#00d97e">🏛</text>
+          <text x="55" y="49" text-anchor="middle" fill="#8892a4" font-size="10" font-family="Space Grotesk, sans-serif">Issuer</text>
+          <text x="55" y="61" text-anchor="middle" fill="#5a6478" font-size="9" font-family="JetBrains Mono, monospace">college/org</text>
+
+          <rect x="135" y="10" width="90" height="50" rx="8" fill="#4a9eff15" stroke="#4a9eff50" stroke-width="1"/>
+          <text x="180" y="31" text-anchor="middle" font-size="18" fill="#4a9eff">👤</text>
+          <text x="180" y="49" text-anchor="middle" fill="#8892a4" font-size="10" font-family="Space Grotesk, sans-serif">Holder</text>
+          <text x="180" y="61" text-anchor="middle" fill="#5a6478" font-size="9" font-family="JetBrains Mono, monospace">student</text>
+
+          <rect x="260" y="10" width="90" height="50" rx="8" fill="#b97fff15" stroke="#b97fff50" stroke-width="1"/>
+          <text x="305" y="31" text-anchor="middle" font-size="18" fill="#b97fff">🔍</text>
+          <text x="305" y="49" text-anchor="middle" fill="#8892a4" font-size="10" font-family="Space Grotesk, sans-serif">Verifier</text>
+          <text x="305" y="61" text-anchor="middle" fill="#5a6478" font-size="9" font-family="JetBrains Mono, monospace">recruiter</text>
+
+          <rect x="60" y="140" width="100" height="50" rx="8" fill="#4a9eff12" stroke="#4a9eff40" stroke-width="1"/>
+          <text x="110" y="161" text-anchor="middle" font-size="16" fill="#4a9eff">📦</text>
+          <text x="110" y="178" text-anchor="middle" fill="#8892a4" font-size="10" font-family="Space Grotesk, sans-serif">IPFS Storage</text>
+          <text x="110" y="190" text-anchor="middle" fill="#5a6478" font-size="9" font-family="JetBrains Mono, monospace">via Pinata</text>
+
+          <rect x="200" y="140" width="100" height="50" rx="8" fill="#b97fff12" stroke="#b97fff40" stroke-width="1"/>
+          <text x="250" y="161" text-anchor="middle" font-size="16" fill="#b97fff">⛓</text>
+          <text x="250" y="178" text-anchor="middle" fill="#8892a4" font-size="10" font-family="Space Grotesk, sans-serif">Smart Contract</text>
+          <text x="250" y="190" text-anchor="middle" fill="#5a6478" font-size="9" font-family="JetBrains Mono, monospace">Polygon</text>
+
+          <rect x="135" y="240" width="90" height="45" rx="8" fill="#ffb34015" stroke="#ffb34050" stroke-width="1"/>
+          <text x="180" y="260" text-anchor="middle" font-size="15" fill="#ffb340">🦊</text>
+          <text x="180" y="276" text-anchor="middle" fill="#8892a4" font-size="10" font-family="Space Grotesk, sans-serif">MetaMask</text>
+
+          <!-- Arrows -->
+          <path d="M55 60 L55 110 L100 140" fill="none" stroke="#00d97e60" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr2)"/>
+          <path d="M90 30 L200 30 L240 140" fill="none" stroke="#00d97e60" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr2)"/>
+          <path d="M130 140 L155 80 L145 60" fill="none" stroke="#4a9eff60" stroke-width="1" marker-end="url(#arr2)"/>
+          <path d="M290 140 L305 60" fill="none" stroke="#b97fff60" stroke-width="1" marker-end="url(#arr2)"/>
+          <path d="M175 60 L175 240" fill="none" stroke="#ffb34060" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arr2)"/>
+
+          <!-- Labels -->
+          <text x="65" y="108" fill="#5a6478" font-size="9" font-family="JetBrains Mono, monospace">upload</text>
+          <text x="148" y="26" fill="#5a6478" font-size="9" font-family="JetBrains Mono, monospace">anchor hash</text>
+          <text x="122" y="112" fill="#5a6478" font-size="9" font-family="JetBrains Mono, monospace">fetch</text>
+          <text x="300" y="108" fill="#5a6478" font-size="9" font-family="JetBrains Mono, monospace">verify</text>
+          <text x="182" y="155" fill="#5a6478" font-size="9" font-family="JetBrains Mono, monospace">sign</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Top issuers -->
+    <div class="card">
+      <div class="section-title" style="margin-bottom:14px">Top Verified Issuers</div>
+      <div class="issuer-list">
+        <div class="issuer-row">
+          <div class="flex gap-2 items-center"><span style="font-size:18px">🏛</span>
+            <div><div class="text-sm fw-600">IIT Bombay</div><div class="text-xs text-dim text-mono">0x1a2b...3c4d</div></div>
+          </div>
+          <div class="flex gap-2 items-center"><span class="tag tag-green">Trusted</span><span class="text-sm text-dim">312 creds</span></div>
+        </div>
+        <div class="issuer-row">
+          <div class="flex gap-2 items-center"><span style="font-size:18px">☁️</span>
+            <div><div class="text-sm fw-600">Amazon Web Services</div><div class="text-xs text-dim text-mono">0x5e6f...7a8b</div></div>
+          </div>
+          <div class="flex gap-2 items-center"><span class="tag tag-green">Trusted</span><span class="text-sm text-dim">287 creds</span></div>
+        </div>
+        <div class="issuer-row">
+          <div class="flex gap-2 items-center"><span style="font-size:18px">🎓</span>
+            <div><div class="text-sm fw-600">Coursera</div><div class="text-xs text-dim text-mono">0x9c0d...1e2f</div></div>
+          </div>
+          <div class="flex gap-2 items-center"><span class="tag tag-green">Trusted</span><span class="text-sm text-dim">241 creds</span></div>
+        </div>
+        <div class="issuer-row">
+          <div class="flex gap-2 items-center"><span style="font-size:18px">🔵</span>
+            <div><div class="text-sm fw-600">Google</div><div class="text-xs text-dim text-mono">0x3a4b...5c6d</div></div>
+          </div>
+          <div class="flex gap-2 items-center"><span class="tag tag-blue">Pending</span><span class="text-sm text-dim">198 creds</span></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+</div><!-- /app -->
+
+<!-- Toast notification -->
+<div class="toast" id="toast">
+  <span id="toast-icon">✅</span>
+  <span id="toast-msg"></span>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
